@@ -1,81 +1,79 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useProjectStore } from '@/stores/project'
-import { useSettingsStore } from '@/stores/settings'
-import { exportPNG, exportJPEG, exportPSD, downloadBlob } from '@/utils/export'
+import { useRouter } from "vue-router";
+import { useProjectStore } from "@/stores/project";
+import { useSettingsStore } from "@/stores/settings";
+import { exportPNG, exportJPEG, exportPSD, downloadBlob } from "@/utils/export";
 
-const router = useRouter()
-const projectStore = useProjectStore()
-const settingsStore = useSettingsStore()
+const router = useRouter();
+const projectStore = useProjectStore();
+const settingsStore = useSettingsStore();
 
 async function handleSave() {
-  await projectStore.saveCurrentProject()
+  await projectStore.saveCurrentProject();
 }
 
 function handleBack() {
   if (projectStore.hasUnsavedChanges) {
-    if (!confirm('有未保存的更改，确定要离开吗？')) {
-      return
+    if (!confirm("有未保存的更改，确定要离开吗？")) {
+      return;
     }
   }
-  projectStore.closeProject()
-  router.push('/')
+  projectStore.closeProject();
+  router.push("/");
 }
 
-async function exportAs(format: 'png' | 'jpeg' | 'psd') {
-  if (!projectStore.currentProject) return
-  
-  const name = projectStore.currentProject.name.replace(/\s+/g, '_')
-  let blob: Blob
-  let filename: string
-  
+async function exportAs(format: "png" | "jpeg" | "psd") {
+  if (!projectStore.currentProject) return;
+
+  const name = projectStore.currentProject.name.replace(/\s+/g, "_");
+  let blob: Blob;
+  let filename: string;
+
   switch (format) {
-    case 'png':
-      blob = await exportPNG(projectStore.currentProject)
-      filename = `${name}.png`
-      break
-    case 'jpeg':
-      blob = await exportJPEG(projectStore.currentProject, 0.9)
-      filename = `${name}.jpg`
-      break
-    case 'psd':
-      blob = await exportPSD(projectStore.currentProject)
-      filename = `${name}.zip`
-      break
+    case "png":
+      blob = await exportPNG(projectStore.currentProject);
+      filename = `${name}.png`;
+      break;
+    case "jpeg":
+      blob = await exportJPEG(projectStore.currentProject, 0.9);
+      filename = `${name}.jpg`;
+      break;
+    case "psd":
+      blob = await exportPSD(projectStore.currentProject);
+      filename = `${name}.zip`;
+      break;
   }
-  
-  downloadBlob(blob, filename)
+
+  downloadBlob(blob, filename);
 }
 
 function toggleFullscreen() {
-  settingsStore.toggleFullscreen()
+  settingsStore.toggleFullscreen();
 }
 </script>
 
 <template>
   <div class="top-bar">
     <div class="left">
-      <button class="back-btn" @click="handleBack">
-        ←
-      </button>
+      <button class="back-btn" @click="handleBack">←</button>
       <span class="project-name">
         {{ projectStore.currentProject?.name }}
         <span v-if="projectStore.hasUnsavedChanges" class="unsaved">*</span>
       </span>
     </div>
-    
+
     <div class="center">
       <div class="history-buttons">
-        <button 
-          class="history-btn" 
+        <button
+          class="history-btn"
           :disabled="!projectStore.canUndo"
           @click="projectStore.undo"
           title="撤销 (Cmd+Z)"
         >
           ↩
         </button>
-        <button 
-          class="history-btn" 
+        <button
+          class="history-btn"
           :disabled="!projectStore.canRedo"
           @click="projectStore.redo"
           title="重做 (Cmd+Shift+Z)"
@@ -84,12 +82,18 @@ function toggleFullscreen() {
         </button>
       </div>
     </div>
-    
+
     <div class="right">
-      <button class="action-btn" @click="toggleFullscreen">
-        ⤢
+      <button class="action-btn" @click="toggleFullscreen">⤢</button>
+
+      <button
+        class="export-png-btn"
+        @click="exportAs('png')"
+        title="导出PNG (Cmd+E)"
+      >
+        导出PNG
       </button>
-      
+
       <div class="export-menu">
         <button class="action-btn">导出 ▾</button>
         <div class="dropdown">
@@ -98,8 +102,12 @@ function toggleFullscreen() {
           <button @click="exportAs('psd')">导出为 ZIP</button>
         </div>
       </div>
-      
-      <button class="save-btn" @click="handleSave" :disabled="!projectStore.hasUnsavedChanges">
+
+      <button
+        class="save-btn"
+        @click="handleSave"
+        :disabled="!projectStore.hasUnsavedChanges"
+      >
         保存 (Cmd+S)
       </button>
     </div>
@@ -240,5 +248,19 @@ function toggleFullscreen() {
 .save-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.export-png-btn {
+  padding: 8px 16px;
+  background: #2d7d46;
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.export-png-btn:hover {
+  background: #369154;
 }
 </style>
