@@ -1,31 +1,50 @@
 <script setup lang="ts">
-import { useSettingsStore } from '@/stores/settings'
-import type { ToolType, SelectionTool } from '@/types'
+import { useSettingsStore } from "@/stores/settings";
+import type { ToolType, SelectionTool, ShapeTool } from "@/types";
 
-const settingsStore = useSettingsStore()
+const settingsStore = useSettingsStore();
 
 const tools: Array<{ type: ToolType; icon: string; label: string }> = [
-  { type: 'brush', icon: '✏️', label: '笔刷 (B)' },
-  { type: 'eraser', icon: '🧹', label: '橡皮 (E)' },
-  { type: 'fill', icon: '🪣', label: '填充 (G)' },
-  { type: 'selection', icon: '⬜', label: '选择 (V)' },
-  { type: 'transform', icon: '↔', label: '变换 (T)' },
-  { type: 'eyedropper', icon: '💧', label: '取色 (I)' }
-]
+  { type: "brush", icon: "✏️", label: "笔刷 (B)" },
+  { type: "eraser", icon: "🧹", label: "橡皮 (E)" },
+  { type: "fill", icon: "🪣", label: "填充 (G)" },
+  { type: "selection", icon: "⬜", label: "选择 (V)" },
+  { type: "transform", icon: "↔", label: "变换 (T)" },
+  { type: "eyedropper", icon: "💧", label: "取色 (I)" },
+  { type: "shape", icon: "⬚", label: "形状 (U)" },
+];
 
-const selectionTools: Array<{ type: SelectionTool; icon: string; label: string }> = [
-  { type: 'rectangle', icon: '▢', label: '矩形选择' },
-  { type: 'ellipse', icon: '○', label: '椭圆选择' },
-  { type: 'lasso', icon: '⊶', label: '套索' },
-  { type: 'magic-wand', icon: '✧', label: '魔棒' }
-]
+const selectionTools: Array<{
+  type: SelectionTool;
+  icon: string;
+  label: string;
+}> = [
+  { type: "rectangle", icon: "▢", label: "矩形选择" },
+  { type: "ellipse", icon: "○", label: "椭圆选择" },
+  { type: "lasso", icon: "⊶", label: "套索" },
+  { type: "magic-wand", icon: "✧", label: "魔棒" },
+];
+
+const shapeTools: Array<{
+  type: ShapeTool;
+  icon: string;
+  label: string;
+}> = [
+  { type: "rectangle", icon: "▢", label: "矩形" },
+  { type: "ellipse", icon: "○", label: "圆形" },
+  { type: "line", icon: "／", label: "直线" },
+];
 
 function selectTool(tool: ToolType) {
-  settingsStore.setTool(tool)
+  settingsStore.setTool(tool);
 }
 
 function selectSelectionTool(tool: SelectionTool) {
-  settingsStore.setSelectionTool(tool)
+  settingsStore.setSelectionTool(tool);
+}
+
+function selectShapeTool(tool: ShapeTool) {
+  settingsStore.setShapeTool(tool);
 }
 </script>
 
@@ -43,9 +62,9 @@ function selectSelectionTool(tool: SelectionTool) {
         <span class="tool-icon">{{ tool.icon }}</span>
       </button>
     </div>
-    
+
     <div class="divider" v-if="settingsStore.currentTool === 'selection'"></div>
-    
+
     <div class="tool-group" v-if="settingsStore.currentTool === 'selection'">
       <button
         v-for="tool in selectionTools"
@@ -53,6 +72,21 @@ function selectSelectionTool(tool: SelectionTool) {
         class="tool-btn small"
         :class="{ active: settingsStore.selectionTool === tool.type }"
         @click="selectSelectionTool(tool.type)"
+        :title="tool.label"
+      >
+        <span class="tool-icon">{{ tool.icon }}</span>
+      </button>
+    </div>
+
+    <div class="divider" v-if="settingsStore.currentTool === 'shape'"></div>
+
+    <div class="tool-group" v-if="settingsStore.currentTool === 'shape'">
+      <button
+        v-for="tool in shapeTools"
+        :key="tool.type"
+        class="tool-btn small"
+        :class="{ active: settingsStore.shapeTool === tool.type }"
+        @click="selectShapeTool(tool.type)"
         :title="tool.label"
       >
         <span class="tool-icon">{{ tool.icon }}</span>
