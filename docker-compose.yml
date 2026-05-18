@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  paint-app:
+    build: .
+    ports:
+      - "16032:5173"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - VITE_HOST=0.0.0.0
