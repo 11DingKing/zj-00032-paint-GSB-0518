@@ -1,74 +1,92 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useProjectStore } from '@/stores/project'
-import { useSettingsStore } from '@/stores/settings'
-import CanvasWorkspace from '@/components/CanvasWorkspace.vue'
-import Toolbar from '@/components/Toolbar.vue'
-import LayerPanel from '@/components/LayerPanel.vue'
-import BrushPanel from '@/components/BrushPanel.vue'
-import ColorPicker from '@/components/ColorPicker.vue'
-import TopBar from '@/components/TopBar.vue'
+import { onMounted, onUnmounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useProjectStore } from "@/stores/project";
+import { useSettingsStore } from "@/stores/settings";
+import { exportPNG, downloadBlob } from "@/utils/export";
+import CanvasWorkspace from "@/components/CanvasWorkspace.vue";
+import Toolbar from "@/components/Toolbar.vue";
+import LayerPanel from "@/components/LayerPanel.vue";
+import BrushPanel from "@/components/BrushPanel.vue";
+import ColorPicker from "@/components/ColorPicker.vue";
+import ShapePanel from "@/components/ShapePanel.vue";
+import TopBar from "@/components/TopBar.vue";
 
-const route = useRoute()
-const router = useRouter()
-const projectStore = useProjectStore()
-const settingsStore = useSettingsStore()
+const route = useRoute();
+const router = useRouter();
+const projectStore = useProjectStore();
+const settingsStore = useSettingsStore();
 
-const isLoading = ref(true)
+const isLoading = ref(true);
 
 function handleKeydown(e: KeyboardEvent) {
-  const isCmd = e.metaKey || e.ctrlKey
-  
-  if (e.key === 'b' || e.key === 'B') {
-    settingsStore.setTool('brush')
-  } else if (e.key === 'e' || e.key === 'E') {
-    settingsStore.setTool('eraser')
-    settingsStore.setBrushType('eraser')
-  } else if (e.key === 'g' || e.key === 'G') {
-    settingsStore.setTool('fill')
-  } else if (e.key === 'v' || e.key === 'V') {
-    settingsStore.setTool('selection')
-  } else if (e.key === 't' || e.key === 'T') {
-    settingsStore.setTool('transform')
-  } else if (e.key === 'i' || e.key === 'I') {
-    settingsStore.setTool('eyedropper')
-  } else if (isCmd && e.key === 'z' && !e.shiftKey) {
-    e.preventDefault()
-    projectStore.undo()
-  } else if (isCmd && e.shiftKey && e.key === 'z') {
-    e.preventDefault()
-    projectStore.redo()
-  } else if (isCmd && e.key === 'n') {
-    e.preventDefault()
-    router.push('/')
-  } else if (isCmd && e.key === 's') {
-    e.preventDefault()
-    projectStore.saveCurrentProject()
-  } else if (e.key === '[') {
-    settingsStore.setBrushSize(Math.max(1, settingsStore.brushSettings.size - 5))
-  } else if (e.key === ']') {
-    settingsStore.setBrushSize(Math.min(500, settingsStore.brushSettings.size + 5))
+  const isCmd = e.metaKey || e.ctrlKey;
+
+  if (e.key === "b" || e.key === "B") {
+    settingsStore.setTool("brush");
+  } else if (e.key === "e" || e.key === "E") {
+    settingsStore.setTool("eraser");
+    settingsStore.setBrushType("eraser");
+  } else if (e.key === "g" || e.key === "G") {
+    settingsStore.setTool("fill");
+  } else if (e.key === "v" || e.key === "V") {
+    settingsStore.setTool("selection");
+  } else if (e.key === "u" || e.key === "U") {
+    settingsStore.setShapeType(settingsStore.shapeType);
+  } else if (e.key === "t" || e.key === "T") {
+    settingsStore.setTool("transform");
+  } else if (e.key === "i" || e.key === "I") {
+    settingsStore.setTool("eyedropper");
+  } else if (isCmd && e.key === "z" && !e.shiftKey) {
+    e.preventDefault();
+    projectStore.undo();
+  } else if (isCmd && e.shiftKey && e.key === "z") {
+    e.preventDefault();
+    projectStore.redo();
+  } else if (isCmd && e.key === "n") {
+    e.preventDefault();
+    router.push("/");
+  } else if (isCmd && e.key === "s") {
+    e.preventDefault();
+    projectStore.saveCurrentProject();
+  } else if (isCmd && e.key === "e") {
+    e.preventDefault();
+    exportCurrentProject();
+  } else if (e.key === "[") {
+    settingsStore.setBrushSize(
+      Math.max(1, settingsStore.brushSettings.size - 5),
+    );
+  } else if (e.key === "]") {
+    settingsStore.setBrushSize(
+      Math.min(500, settingsStore.brushSettings.size + 5),
+    );
   }
 }
 
+async function exportCurrentProject() {
+  if (!projectStore.currentProject) return;
+  const name = projectStore.currentProject.name.replace(/\s+/g, "_");
+  const blob = await exportPNG(projectStore.currentProject);
+  downloadBlob(blob, `${name}.png`);
+}
+
 onMounted(async () => {
-  const projectId = route.params.projectId as string
+  const projectId = route.params.projectId as string;
   if (projectId) {
-    await projectStore.openProject(projectId)
+    await projectStore.openProject(projectId);
   }
   if (!projectStore.currentProject) {
-    router.push('/')
-    return
+    router.push("/");
+    return;
   }
-  isLoading.value = false
-  
-  window.addEventListener('keydown', handleKeydown)
-})
+  isLoading.value = false;
+
+  window.addEventListener("keydown", handleKeydown);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
+  window.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>
@@ -84,6 +102,7 @@ onUnmounted(() => {
         <LayerPanel />
         <BrushPanel />
         <ColorPicker />
+        <ShapePanel />
       </div>
     </div>
   </div>
