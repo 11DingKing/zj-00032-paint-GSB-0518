@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useSettingsStore } from '@/stores/settings'
+import { exportPNG, downloadBlob } from '@/utils/export'
 import CanvasWorkspace from '@/components/CanvasWorkspace.vue'
 import Toolbar from '@/components/Toolbar.vue'
 import LayerPanel from '@/components/LayerPanel.vue'
@@ -17,14 +18,23 @@ const settingsStore = useSettingsStore()
 
 const isLoading = ref(true)
 
+async function handleExportPNG() {
+  if (!projectStore.currentProject) return
+  const name = projectStore.currentProject.name.replace(/\s+/g, '_')
+  const blob = await exportPNG(projectStore.currentProject)
+  downloadBlob(blob, `${name}.png`)
+}
+
 function handleKeydown(e: KeyboardEvent) {
   const isCmd = e.metaKey || e.ctrlKey
   
   if (e.key === 'b' || e.key === 'B') {
     settingsStore.setTool('brush')
   } else if (e.key === 'e' || e.key === 'E') {
-    settingsStore.setTool('eraser')
-    settingsStore.setBrushType('eraser')
+    if (!isCmd) {
+      settingsStore.setTool('eraser')
+      settingsStore.setBrushType('eraser')
+    }
   } else if (e.key === 'g' || e.key === 'G') {
     settingsStore.setTool('fill')
   } else if (e.key === 'v' || e.key === 'V') {
@@ -33,6 +43,11 @@ function handleKeydown(e: KeyboardEvent) {
     settingsStore.setTool('transform')
   } else if (e.key === 'i' || e.key === 'I') {
     settingsStore.setTool('eyedropper')
+  } else if (e.key === 'u' || e.key === 'U') {
+    settingsStore.setTool('shape')
+  } else if (isCmd && e.key === 'e') {
+    e.preventDefault()
+    handleExportPNG()
   } else if (isCmd && e.key === 'z' && !e.shiftKey) {
     e.preventDefault()
     projectStore.undo()

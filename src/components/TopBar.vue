@@ -90,10 +90,13 @@ function toggleFullscreen() {
         ⤢
       </button>
       
+      <button class="action-btn export-png-btn" @click="exportAs('png')" title="导出PNG (Cmd+E)">
+        导出PNG
+      </button>
+      
       <div class="export-menu">
-        <button class="action-btn">导出 ▾</button>
+        <button class="action-btn">更多 ▾</button>
         <div class="dropdown">
-          <button @click="exportAs('png')">导出 PNG</button>
           <button @click="exportAs('jpeg')">导出 JPEG</button>
           <button @click="exportAs('psd')">导出为 ZIP</button>
         </div>
@@ -184,6 +187,16 @@ function toggleFullscreen() {
 .action-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.export-png-btn {
+  background: var(--accent);
+  color: white;
+}
+
+.export-png-btn:hover {
+  background: var(--accent-hover);
+  color: white;
 }
 
 .export-menu {
