@@ -190,9 +190,13 @@ function drawShapePreview(ctx: CanvasRenderingContext2D) {
 function drawShapeToLayer() {
   if (!currentLayer.value || !currentLayer.value.bitmapData) return;
 
-  const layerCanvas = createCanvas(project.value!.width, project.value!.height);
+  const beforeData = cloneImageData(currentLayer.value.bitmapData);
+
+  const projectWidth = project.value!.width;
+  const projectHeight = project.value!.height;
+  const layerCanvas = createCanvas(projectWidth, projectHeight);
   const layerCtx = layerCanvas.getContext("2d")!;
-  layerCtx.putImageData(currentLayer.value.bitmapData, 0, 0);
+  layerCtx.putImageData(beforeData, 0, 0);
 
   const strokeColor = colorToString(settingsStore.shapeStrokeColor);
   const fillColor = colorToString(settingsStore.shapeFillColor);
@@ -207,6 +211,25 @@ function drawShapeToLayer() {
   const y1 = shapeStartY.value;
   const x2 = shapeCurrentX.value;
   const y2 = shapeCurrentY.value;
+
+  const minX = Math.min(x1, x2);
+  const minY = Math.min(y1, y2);
+  const maxX = Math.max(x1, x2);
+  const maxY = Math.max(y1, y2);
+  const clampedX1 = Math.max(0, Math.min(minX - strokeWidth, projectWidth - 1));
+  const clampedY1 = Math.max(
+    0,
+    Math.min(minY - strokeWidth, projectHeight - 1),
+  );
+  const clampedX2 = Math.max(0, Math.min(maxX + strokeWidth + 1, projectWidth));
+  const clampedY2 = Math.max(
+    0,
+    Math.min(maxY + strokeWidth + 1, projectHeight),
+  );
+  const subW = clampedX2 - clampedX1;
+  const subH = clampedY2 - clampedY1;
+
+  if (subW <= 0 || subH <= 0) return;
 
   if (settingsStore.shapeType === "rectangle") {
     const left = Math.min(x1, x2);
@@ -239,18 +262,28 @@ function drawShapeToLayer() {
     layerCtx.stroke();
   }
 
-  const newImageData = layerCtx.getImageData(
-    0,
-    0,
-    project.value!.width,
-    project.value!.height,
-  );
+  const newImageData = layerCtx.getImageData(clampedX1, clampedY1, subW, subH);
 
-  if (currentLayer.value.bitmapData) {
-    const beforeData = cloneImageData(currentLayer.value.bitmapData);
-    currentLayer.value.bitmapData = newImageData;
-    projectStore.recordHistory(currentLayer.value.id, beforeData, newImageData);
+  for (let py = 0; py < subH; py++) {
+    for (let px = 0; px < subW; px++) {
+      const srcIdx = (py * subW + px) * 4;
+      const tgtX = clampedX1 + px;
+      const tgtY = clampedY1 + py;
+      const tgtIdx = (tgtY * projectWidth + tgtX) * 4;
+
+      currentLayer.value.bitmapData.data[tgtIdx] = newImageData.data[srcIdx];
+      currentLayer.value.bitmapData.data[tgtIdx + 1] =
+        newImageData.data[srcIdx + 1];
+      currentLayer.value.bitmapData.data[tgtIdx + 2] =
+        newImageData.data[srcIdx + 2];
+      currentLayer.value.bitmapData.data[tgtIdx + 3] =
+        newImageData.data[srcIdx + 3];
+    }
   }
+
+  const dirtyRect = { x: clampedX1, y: clampedY1, width: subW, height: subH };
+  const stepData = cloneImageData(currentLayer.value.bitmapData);
+  projectStore.recordHistory(currentLayer.value.id, beforeData, stepData);
 }
 
 function handleMouseDown(event: MouseEvent) {
@@ -505,8 +538,8 @@ function startShape(x: number, y: number) {
 }
 
 function finishShape() {
-  isDrawingShape.value = false;
   drawShapeToLayer();
+  isDrawingShape.value = false;
   renderOverlay();
   renderCanvas();
 }
